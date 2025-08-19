@@ -1,7 +1,7 @@
+package BinarySearchTree;
 
 
 
-import BinarySearchTree.BST;
 import java.util.Scanner;
 
 public class BSTTest {
