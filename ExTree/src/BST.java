@@ -8,10 +8,10 @@ public class BST {
 	public boolean isEmpty() {
 		return root == null;
 	}
-	public void insert(int data) {
-		root = insert(root, data);
-	}
-	public BSTNode insert(BSTNode node, int data) {
+  	public void insert(int data) {
+        root = insert(root, data);
+    }
+	private BSTNode insert(BSTNode node, int data) {
 		if(node == null)
 			node = new BSTNode(data);
 		else {
@@ -25,7 +25,7 @@ public class BST {
 	public boolean search(int val) {
 		return search(root, val);
 	}
-	public boolean search(BSTNode r, int val) {
+	private boolean search(BSTNode r, int val) {
 		boolean found = false;
 		while(r != null && !found) {
 			int rval = r.getData();
@@ -47,7 +47,7 @@ public class BST {
 		else if(search(d) == false)
 			System.out.println("Sorry " + d + "is not present.");
 		else {
-			//root = delete(root, d);
+			root = delete(root, d);
 			System.out.println(d + "delete from the Tree");
 		}
 	}
@@ -84,5 +84,49 @@ public class BST {
 				root.setRight(n);	
 		}
 		return root;
+	}
+	public int countNodes() {
+		return countNodes(root);
+	}
+	private  int countNodes(BSTNode r) {
+		int l = 0;
+		if(r == null)
+			return l;
+		else {
+			l = 1;
+			l += countNodes(r.getLeft());
+			l += countNodes(r.getRight());
+			return l;
+		}
+	}
+	public void inorder() {
+		inorder(root);
+	}
+	private void inorder(BSTNode r) {
+		if(r != null) {
+			inorder(r.getLeft());
+			System.out.print(r.getData() + " ");
+			inorder(r.getRight());
+		}
+	}
+	public void postorder() {
+		postorder(root);
+	}
+	private void postorder(BSTNode r) {
+		if(r != null){
+			postorder(r.getLeft());
+			postorder(r.getRight());
+			System.out.print(r.getData() + " ");
+		}
+	}
+	public void preorder() {
+		preorder(root);
+	}
+	private void preorder(BSTNode r){
+		if(r != null){
+			System.out.print(r.getData() + " ");
+			preorder(r.getLeft());
+			preorder(r.getRight());
+		}
 	}
 }
