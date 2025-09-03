@@ -131,6 +131,7 @@ Where Employee.Dept = Department.Dept and Department.Dname = 'Accounts'
 select Ename
 From Employee
 Where Dept = (select Dept From Employee where Ename ='Mark')
+
 --10.ต้องการทราบชื่อพนักงานที่มีเงินเดือนน้อยที่สุด และมากที่สุด
 Select MIN(salary) AS MinSalary,Max(salary) AS MaxSalary
 From Employee
