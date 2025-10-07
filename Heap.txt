@@ -1,0 +1,374 @@
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
+
+class BinaryHeap {
+    private static final int d = 2;  // d คือจำนวนลูกของแต่ละโหนด (ที่นี่คือ 2 → Binary Heap)
+    private int heapSize;            // จำนวนสมาชิกใน heap ปัจจุบัน
+    private int[] heap;              // array สำหรับเก็บข้อมูล heap
+
+    // 🔸 Constructor: สร้าง heap ว่างที่มีขนาดตาม capacity ที่รับมา
+    public BinaryHeap(int capacity) {
+        heapSize = 0;
+        heap = new int[capacity + 1];   // +1 เผื่อ index เริ่มต้น (optional)
+        Arrays.fill(heap, -1);          // กำหนดค่าเริ่มต้นทุกช่องเป็น -1
+    }
+
+    // 🔸 ตรวจว่า heap ว่างไหม
+    public boolean isEmpty() {
+        return heapSize == 0;
+    }
+
+    // 🔸 ตรวจว่า heap เต็มหรือยัง
+    public boolean isFull() {
+        return heapSize == heap.length;
+    }
+
+    // 🔸 ล้าง heap ให้ว่าง
+    public void makeEmpty() {
+        heapSize = 0;
+    }
+
+    // 🔸 หา index ของพ่อของ node ที่ i
+    private int parent(int i) {
+        return (i - 1) / d;  // parent อยู่ที่ (i-1)/2
+    }
+
+    // 🔸 หา index ของลูกลำดับที่ k ของ node i
+    private int kthChild(int i, int k) {
+        return d * i + k;  // ถ้า binary → ลูกซ้าย = 2*i+1, ลูกขวา = 2*i+2
+    }
+
+    // 🔸 หา “ลูกที่มีค่าน้อยที่สุด” ของโหนด index ind
+    private int minChild(int ind) {
+        int bestChild = kthChild(ind, 1); // สมมติว่าลูกซ้ายเล็กสุดก่อน
+        int k = 2;
+        int pos = kthChild(ind, k);
+        while ((k <= d) && (pos < heapSize)) {  // ตรวจลูกทุกตัว (ซ้าย/ขวา)
+            if (heap[pos] < heap[bestChild])
+                bestChild = pos;
+            pos = kthChild(ind, k++);
+        }
+        return bestChild;
+    }
+
+    // 🔸 ปรับโครงสร้างจากล่างขึ้นบน (หลังจาก insert)
+    private void heapifyUp(int childInd) {
+        int tmp = heap[childInd];
+        while (childInd > 0 && tmp < heap[parent(childInd)]) {  // ถ้าลูกเล็กกว่าพ่อ → สลับขึ้น
+            heap[childInd] = heap[parent(childInd)];
+            childInd = parent(childInd);
+        }
+        heap[childInd] = tmp;
+    }
+
+    // 🔸 ปรับโครงสร้างจากบนลงล่าง (หลังจาก delete)
+    private void heapifyDown(int ind) {
+        int child;
+        int tmp = heap[ind];
+        while (kthChild(ind, 1) < heapSize) {  // มีลูกอย่างน้อย 1 ตัว
+            child = minChild(ind);
+            if (heap[child] < tmp)
+                heap[ind] = heap[child]; // ดึงลูกที่เล็กที่สุดขึ้นมาแทน
+            else
+                break;
+            ind = child;
+        }
+        heap[ind] = tmp;
+    }
+
+    // 🔸 เพิ่มค่าใหม่เข้า heap
+    public void insert(int x) {
+        if (isFull())
+            throw new NoSuchElementException("Overflow Exception");
+        heap[heapSize++] = x;        // ใส่ค่าไว้ที่ท้ายสุด
+        heapifyUp(heapSize - 1);     // ปรับโครงสร้างขึ้นบน
+    }
+
+    // 🔸 คืนค่าต่ำสุด (root)
+    public int findmin() {
+        if (isEmpty())
+            throw new NoSuchElementException("Underflow Exception");
+        return heap[0];
+    }
+
+    // 🔸 ลบค่าที่ตำแหน่ง ind (ใช้ใน deleteMin ด้วย)
+    public int delete(int ind) {
+        if (isEmpty())
+            throw new NoSuchElementException("Underflow Exception");
+        int keyItem = heap[ind];
+        heap[ind] = heap[heapSize - 1]; // นำค่าสุดท้ายมาแทนตำแหน่งที่ลบ
+        heapSize--;
+        heapifyDown(ind);               // ปรับ heap ลงล่าง
+        return keyItem;
+    }
+
+    // 🔸 ลบค่าน้อยสุด (root) แล้ว return ค่าใหม่ที่ root หลังจากลบ
+    public int deleteMin() {
+        delete(0);          // ลบ root
+        int keyMin = heap[0];
+        return keyMin;      // คืนค่าหลังลบ (อาจจะไม่ถูกต้องถ้าอยากคืนค่าที่ถูกลบจริง ๆ)
+    }
+
+    // 🔸 แสดง heap ทั้งหมด
+    public void printHeap() {
+        System.out.print("\nHeap = ");
+        for (int i = 0; i < heapSize; i++)
+            System.out.print(heap[i] + " ");
+        System.out.println();
+    }
+}
+public class BinaryHeapDemo {
+
+	@SuppressWarnings("resource") // ปิดคำเตือนเรื่อง Scanner ไม่ได้ถูกปิด (ไม่กระทบการทำงาน)
+	public static void main(String[] args) {
+		Scanner scan = new Scanner(System.in);                 // ใช้รับข้อมูลจากผู้ใช้ทางคีย์บอร์ด
+		System.out.println("Binary Heap Demo");                // แสดงชื่อโปรแกรม
+		System.out.print("Enter size of Binary heap: ");        // ขอให้ผู้ใช้ระบุขนาดของ heap
+		
+		BinaryHeap bh = new BinaryHeap(scan.nextInt());         // สร้างอ็อบเจกต์ BinaryHeap ตามขนาดที่ผู้ใช้ป้อน
+		
+		char ch; // ตัวแปรเก็บคำตอบ (Y/N) ว่าจะทำงานต่อไหม
+		do {
+			// แสดงเมนูการทำงานของ Binary Heap
+			System.out.println("\nBinary Heap Operations\n");
+			System.out.println("1. insert");        // เพิ่มข้อมูล
+			System.out.println("2. delete min");    // ลบข้อมูลที่น้อยที่สุด
+			System.out.println("3. check full");    // ตรวจว่า heap เต็มไหม
+			System.out.println("4. check empty");   // ตรวจว่า heap ว่างไหม
+			System.out.println("5. clear");         // ล้าง heap ทั้งหมด
+			
+			int choice = scan.nextInt(); // รับค่าตัวเลือกจากผู้ใช้
+			switch(choice) {
+			case 1: { // ✅ เมนู 1: เพิ่มข้อมูลใหม่เข้า heap
+				try {
+					System.out.println("Enter integer element to insert: "); // ขอให้ใส่ค่าที่ต้องการเพิ่ม
+					bh.insert(scan.nextInt()); // เรียกเมธอด insert() เพื่อเพิ่มค่าใหม่เข้า heap
+				} catch (Exception e) { // ถ้า heap เต็มจะเกิด Exception
+					System.out.println(e.getMessage());
+				}
+				break;
+			}
+			case 2: // ✅ เมนู 2: ลบค่าน้อยสุดใน heap (root)
+				try {
+					System.out.println("Min Element = " + bh.deleteMin()); // แสดงค่าที่ถูกลบออก
+				} catch (Exception e) { // ถ้า heap ว่างจะเกิด Exception
+					System.out.println(e.getMessage());
+				}
+				break;
+			case 3: // ✅ เมนู 3: ตรวจว่า heap เต็มหรือไม่
+				System.out.println("Full status = " + bh.isFull());
+				break;
+			case 4: // ✅ เมนู 4: ตรวจว่า heap ว่างหรือไม่
+				System.out.println("Empty status = " + bh.isEmpty());
+				break;
+			case 5: // ✅ เมนู 5: ล้าง heap ทั้งหมด
+				bh.makeEmpty(); // ตั้งค่า heapSize = 0
+				System.out.println("Heap cleared\n");
+				break;
+			default: // ✅ ถ้าผู้ใช้กรอกเลขเมนูผิด
+				System.out.println("Wrong Entry\n");
+				break;
+			}
+			
+			bh.printHeap(); // ✅ แสดงสถานะของ heap ปัจจุบันหลังจากทำงานแต่ละคำสั่งเสร็จ
+			
+			System.out.println("\nDo you want to continue(Y or N)"); // ถามว่าต้องการทำงานต่อไหม
+			ch = scan.next().charAt(0); // อ่านตัวอักษรตัวแรกจาก input เช่น Y หรือ N
+		}while(ch == 'y' || ch == 'Y'); // ถ้าใส่ Y หรือ y จะวนกลับไปทำเมนูใหม่อีกครั้ง
+	}
+
+}
+
+
+
+
+
+
+
+class LeftHeapNode {
+    int element;      // ค่าข้อมูลที่เก็บใน node
+    int SValue;       // null path length (ความลึกของเส้นทางสั้นที่สุดไปยัง node ว่าง)
+    LeftHeapNode left, right; // ลูกซ้ายและลูกขวา
+
+    // 🔸 สร้าง node ใหม่ โดยมีค่า element อย่างเดียว
+    public LeftHeapNode(int ele) {
+        this(ele, null, null);
+    }
+
+    // 🔸 สร้าง node พร้อมลูกซ้ายและลูกขวา
+    public LeftHeapNode(int ele, LeftHeapNode left, LeftHeapNode right) {
+        this.element = ele;
+        this.left = left;
+        this.right = right;
+        this.SValue = 0;  // เริ่มต้น SValue = 0
+    }
+}
+
+class LeftListHeap {
+    private LeftHeapNode root; // node รากของ heap
+
+    // 🔸 สร้าง heap ว่าง
+    public LeftListHeap() {
+        root = null;
+    }
+
+    // 🔸 ตรวจว่า heap ว่างไหม
+    public boolean isEmpty() {
+        return root == null;
+    }
+
+    // 🔸 ล้าง heap ทั้งหมด
+    public void clear() {
+        root = null;
+    }
+
+    // 🔸 รวม (merge) heap นี้เข้ากับ heap อื่น
+    public void merge(LeftListHeap rhs) {
+        if (this == rhs)  // ป้องกันกรณี merge ตัวเอง
+            return;
+        root = merge(root.right, rhs.root); // ❌ ตรงนี้น่าจะพิมพ์ผิด (ดูอธิบายด้านล่าง)
+        rhs.root = null;
+    }
+
+    // 🔸 merge สอง heap ย่อย
+    private LeftHeapNode merge(LeftHeapNode x, LeftHeapNode y) {
+        // ถ้า node ใดเป็น null → ส่งอีก node กลับ
+        if (x == null)
+            return y;
+        if (y == null)
+            return x;
+
+        // ทำให้ x เป็น heap ที่มีค่าน้อยกว่า (min-heap)
+        if (x.element > y.element) {
+            LeftHeapNode tmp = x;
+            x = y;
+            y = tmp;
+        }
+
+        // รวม y เข้ากับลูกขวาของ x (recursion)
+        x.right = merge(x.right, y);
+
+        // ถ้าไม่มีลูกซ้าย → ย้ายลูกขวามาเป็นลูกซ้าย
+        if (x.left == null) {
+            x.left = x.right;
+            x.right = null;
+        } else {
+            // ถ้าลูกซ้ายมี SValue < ลูกขวา → สลับซ้ายกับขวา
+            if (x.left.SValue < x.right.SValue) {
+                LeftHeapNode tmp = x.left;
+                x.left = x.right;
+                x.right = tmp;
+            }
+            // ปรับค่า SValue ของ node ปัจจุบัน
+            x.SValue = x.right.SValue + 1;
+        }
+
+        return x;
+    }
+
+    // 🔸 แทรกค่าใหม่ → ใช้ merge กับ heap เดิม
+    public void insert(int x) {
+        root = merge(new LeftHeapNode(x), root);
+    }
+
+    // 🔸 ลบค่าน้อยสุด (root)
+    public int deleteMin() {
+        if (isEmpty())
+            return -1;
+        int minItem = root.element;
+        // รวมลูกซ้ายและลูกขวาเข้าด้วยกันแทน root เดิม
+        root = merge(root.left, root.right);
+        return minItem;
+    }
+
+    // 🔸 inorder traversal เพื่อดูโครงสร้าง
+    public void inorder() {
+        inorder(root);
+        System.out.println();
+    }
+
+    // 🔸 แสดงค่าแบบ inorder (ซ้าย - root - ขวา)
+    private void inorder(LeftHeapNode r) {
+        if (r != null) {
+            inorder(r.left);
+            System.out.print(" " + r.element);
+            inorder(r.right);
+        }
+    }
+}
+public class LeftHeapDemo {
+	
+	@SuppressWarnings("resource")
+	public static void main(String[] args) {
+		// สร้าง object Scanner เพื่อรับค่าจากคีย์บอร์ด
+		Scanner scan = new Scanner(System.in);
+		System.out.println("LeftHeap Demo"); // แสดงชื่อโปรแกรม
+
+		// สร้าง heap ว่าง 1 กอง เพื่อใช้เก็บข้อมูล
+		LeftListHeap lh = new LeftListHeap();
+		
+		char ch; // ตัวแปรเก็บคำตอบจากผู้ใช้ ว่าจะทำงานต่อหรือไม่ (Y/N)
+
+		// เริ่มวน loop เมนู
+		do {
+			// แสดงเมนูคำสั่งที่ให้ผู้ใช้เลือก
+			System.out.println("\nLeftListHeap Operations\n");
+			System.out.println("1. insert");       // แทรกค่าใหม่
+			System.out.println("2. delete min");   // ลบค่าที่น้อยที่สุด
+			System.out.println("3. check empty");  // ตรวจว่า heap ว่างหรือไม่
+			System.out.println("4. clear");        // ล้าง heap ทั้งหมด
+			
+			int choice = scan.nextInt(); // รับตัวเลขเมนูจากผู้ใช้
+
+			// ตรวจว่าเลือกเมนูไหน แล้วทำงานตามนั้น
+			switch(choice) {
+				case 1: {
+					try {
+						System.out.println("Enter integer element to insert: ");
+						// รับค่าที่จะ insert แล้วเพิ่มลงใน heap
+						lh.insert(scan.nextInt());
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+					}
+					break;
+				}
+
+				case 2:
+					try {
+						// ลบค่าที่น้อยที่สุดใน heap (root)
+						System.out.println("Min Element = " + lh.deleteMin());
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+					}
+					break;
+
+				case 3:
+					// ตรวจสอบว่า heap ว่างไหม
+					System.out.println("Empty status = " + lh.isEmpty());
+					break;
+
+				case 4:
+					// ล้าง heap ทั้งหมด
+					lh.clear();
+					System.out.println("Heap cleared\n");
+					break;
+
+				default:
+					// ถ้าผู้ใช้ใส่เมนูผิด
+					System.out.println("Wrong Entry\n");
+					break;
+			}
+			
+			// แสดงข้อมูลใน heap แบบ inorder traversal (ซ้าย-กลาง-ขวา)
+			System.out.print("\nInorder Traversal:");
+			lh.inorder();
+
+			// ถามว่าจะทำงานต่อไหม
+			System.out.println("\nDo you want to continue(Y or N)");
+			ch = scan.next().charAt(0);
+
+		// ถ้า user ตอบ y หรือ Y → ทำงานต่อ
+		} while(ch == 'y' || ch == 'Y');
+	}
+}

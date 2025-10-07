@@ -1,0 +1,421 @@
+import java.util.HashSet;             // Used to store a set of nodes (Set) to prevent duplicates
+import java.util.InputMismatchException;  // Used to catch errors when the user enters invalid data types
+import java.util.Iterator;            // Used for looping through a Set
+import java.util.Scanner;             // Used to receive input from the keyboard
+import java.util.Set;                 // Used to declare a variable of type Set
+
+public class DijkstrasShortestPath {   // Main class for computing the shortest path using Dijkstra's algorithm
+	private int distances[];           // Stores the shortest distances from the source to each node
+	private Set<Integer> settled;      // Nodes whose shortest distance has been finalized
+	private Set<Integer> unsettled;    // Nodes that are still being processed
+	private int numberOfNodes;         // Total number of nodes in the graph
+	private int adjacencyMatrix[][];   // Matrix storing edge weights between nodes
+
+	// 🔹 Constructor — prepares initial data structures
+	public DijkstrasShortestPath(int numberOfNodes) {
+		this.numberOfNodes = numberOfNodes;                       // Set number of nodes
+		distances = new int[numberOfNodes + 1];                   // Create distance array (index starts from 1)
+		settled = new HashSet<Integer>();                         // Set for finalized nodes
+		unsettled = new HashSet<Integer>();                       // Set for unprocessed nodes
+		adjacencyMatrix = new int[numberOfNodes + 1][numberOfNodes + 1]; // Table for graph weights
+	}
+
+	// 🔹 Main method — executes Dijkstra's algorithm
+	public void dijkstrasAlgorithm(int adjacencyMatrix[][], int source) {
+		int evaluationNode;                                       // Node currently being evaluated
+
+		// Copy input matrix into the class variable
+		for(int i = 1; i <= numberOfNodes; i++) {
+			for(int j = 1; j <= numberOfNodes; j++) {
+				this.adjacencyMatrix[i][j] = adjacencyMatrix[i][j];
+			}
+		}
+
+		// Initialize all distances to infinity
+		for(int i = 1; i <= numberOfNodes; i++)
+			distances[i] = Integer.MAX_VALUE;
+
+		unsettled.add(source);         // Add the source node to unsettled (start point)
+		distances[source] = 0;         // Distance from source to itself is 0
+
+		// Repeat until no nodes remain in unsettled
+		while(!unsettled.isEmpty()) {
+			evaluationNode = getNodeWithMinDistanceUnsettled(); // Find node with smallest distance in unsettled
+			unsettled.remove(evaluationNode);                   // Remove it from unsettled
+			settled.add(evaluationNode);                         // Add to settled (finalized)
+			evaluateNeighbours(evaluationNode);                  // Evaluate its neighbors
+		}
+	}
+
+	// 🔹 Find node with the smallest distance in unsettled
+	private int getNodeWithMinDistanceUnsettled() {
+		int node = 0;      // Node with the smallest distance
+		int min;        // Temporary minimum distance
+		Iterator<Integer> iterator = unsettled.iterator();       // Iterator
+		node = iterator.next();        // Start with the first node in the set
+		min = distances[node];        // Set initial min distance
+
+		for(int i = 1; i <= distances.length; i++) {             // Loop through all nodes
+			if(unsettled.contains(i)) {      // If node is still unsettled
+				if(distances[i] <= min) {    // If its distance is smaller than current min
+					min = distances[i];  // Update minimum distance
+					node = i;     // Remember the node
+				}
+			}
+		}
+		return node;       // Return node with smallest distance
+	}
+
+	// 🔹 Evaluate neighbors of the selected node
+	private void evaluateNeighbours(int evaluationNode) {
+		int edgeDistance = -1;          // Edge weight
+		int newDistance = -1;           // New calculated distance
+
+		for(int destinationNode = 1; destinationNode <= numberOfNodes; destinationNode++) {
+			if(!settled.contains(destinationNode)) {              // If node not finalized
+				if(adjacencyMatrix[evaluationNode][destinationNode] != Integer.MAX_VALUE) { // If a path exists
+					edgeDistance = adjacencyMatrix[evaluationNode][destinationNode]; // Edge weight
+					newDistance = distances[evaluationNode] + edgeDistance;          // New distance = current + edge
+
+					if(newDistance < distances[destinationNode])       // If new distance is shorter
+						distances[destinationNode] = newDistance;  // Update to shorter distance
+
+					unsettled.add(destinationNode);        // Add destination node to unsettled
+				}
+			}
+		}
+	}
+
+	// 🔹 main() — program entry point
+	public static void main(String[] args) {
+		int adjecencyMatrix[][];     // Table storing edge weights
+		int numberOfvertices;        // Number of graph vertices
+		int source = 0, destination = 0; // Start and end nodes
+		Scanner scan = new Scanner(System.in); // Scanner for user input
+
+		try {
+			System.out.println("Enter the number of vertices");   // Ask user for number of vertices
+			numberOfvertices = scan.nextInt();                    // Read vertex count
+			adjecencyMatrix = new int[numberOfvertices + 1][numberOfvertices + 1]; // Create matrix
+
+			System.out.println("Enter the weighted Matrix for graph."); // Ask for weight matrix
+			for(int i = 1; i <= numberOfvertices; i++) {          // Input all weights
+				for(int j = 1; j <= numberOfvertices; j++) {
+					adjecencyMatrix[i][j] = scan.nextInt();       // Read weight i → j
+					if(i == j) {                                  // If same node
+						adjecencyMatrix[i][j] = 0;                // Distance = 0
+						continue;
+					}
+					if(adjecencyMatrix[i][j] == 0)                // If no path
+						adjecencyMatrix[i][j] = Integer.MAX_VALUE; // Set as infinity
+				}
+			}
+
+			System.out.print("\nEnter the source: ");             // Input source node
+			source = scan.nextInt();
+			System.out.print("\nEnter the destination: ");        // Input destination node
+			destination = scan.nextInt();
+
+			DijkstrasShortestPath dijkstras = new DijkstrasShortestPath(numberOfvertices); // Create object
+			dijkstras.dijkstrasAlgorithm(adjecencyMatrix, source); // Run Dijkstra
+
+			System.out.println("The Shortest Path from " + source + " to " + destination + " is ");
+			for(int i = 1; i <= dijkstras.distances.length - 1; i++) { // Display only destination node result
+				if(i == destination)
+					System.out.println(source + " to " + i + " is " + dijkstras.distances[i]);
+			}
+		} catch (InputMismatchException e) {                      // If user enters non-numeric input
+			System.out.println("Wrong Input Format!!!");          // Show warning
+		}
+		scan.close();                                             // Close scanner
+	}
+}
+
+
+import java.util.HashSet;             // ใช้เก็บเซตของโหนด (Set) เพื่อป้องกันค่าซ้ำ
+import java.util.InputMismatchException;  // ใช้ตรวจจับข้อผิดพลาดเวลาผู้ใช้กรอกข้อมูลผิดชนิด
+import java.util.Iterator;            // ใช้สำหรับวนซ้ำใน Set
+import java.util.Scanner;             // ใช้รับข้อมูลจากคีย์บอร์ด
+import java.util.Set;                 // ใช้ประกาศตัวแปรประเภท Set
+
+public class DijkstrasShortestPath {   // คลาสหลักสำหรับคำนวณเส้นทางสั้นที่สุดด้วยอัลกอริทึม Dijkstra
+	private int distances[];           // เก็บระยะทางที่สั้นที่สุดจากจุดเริ่มต้นไปยังแต่ละโหนด
+	private Set<Integer> settled;      // โหนดที่คำนวณระยะทางเสร็จสิ้นแล้ว (final)
+	private Set<Integer> unsettled;    // โหนดที่ยังรอประมวลผล
+	private int numberOfNodes;         // จำนวนโหนดทั้งหมดในกราฟ
+	private int adjacencyMatrix[][];   // เมทริกซ์เก็บน้ำหนักของเส้นทางระหว่างโหนดต่าง ๆ
+
+	// 🔹 ตัวสร้าง (Constructor) — ใช้เตรียมโครงสร้างข้อมูลเริ่มต้น
+	public DijkstrasShortestPath(int numberOfNodes) {
+		this.numberOfNodes = numberOfNodes;                       // กำหนดจำนวนโหนด
+		distances = new int[numberOfNodes + 1];                   // สร้างอาเรย์เก็บระยะทาง (index เริ่มจาก 1)
+		settled = new HashSet<Integer>();                         // เซตเก็บโหนดที่คำนวณเสร็จแล้ว
+		unsettled = new HashSet<Integer>();                       // เซตเก็บโหนดที่ยังไม่เสร็จ
+		adjacencyMatrix = new int[numberOfNodes + 1][numberOfNodes + 1]; // ตารางเก็บน้ำหนักของกราฟ
+	}
+
+	// 🔹 เมธอดหลัก — ทำงานของอัลกอริทึม Dijkstra
+	public void dijkstrasAlgorithm(int adjacencyMatrix[][], int source) {
+		int evaluationNode;                                       // โหนดที่กำลังถูกประเมิน
+
+		// คัดลอกข้อมูลจากเมทริกซ์ที่รับเข้ามาไว้ในคลาส
+		for(int i = 1; i <= numberOfNodes; i++) {
+			for(int j = 1; j <= numberOfNodes; j++) {
+				this.adjacencyMatrix[i][j] = adjacencyMatrix[i][j];
+			}
+		}
+
+		// ตั้งค่าระยะทางเริ่มต้นของทุกโหนดเป็น infinity (ยังไม่ทราบค่า)
+		for(int i = 1; i <= numberOfNodes; i++)
+			distances[i] = Integer.MAX_VALUE;
+
+		unsettled.add(source);         // เพิ่มโหนดต้นทางเข้าไปในเซต unsettled (เริ่มคำนวณจากจุดนี้)
+		distances[source] = 0;         // ระยะทางจากต้นทางไปตัวเองเท่ากับ 0
+
+		// ทำซ้ำจนกว่าจะไม่มีโหนดเหลือใน unsettled
+		while(!unsettled.isEmpty()) {
+			evaluationNode = getNodeWithMinDistanceUnsettled(); // หาโหนดที่มีระยะทางน้อยที่สุดใน unsettled
+			unsettled.remove(evaluationNode);                   // เอาออกจาก unsettled
+			settled.add(evaluationNode);                         // ใส่เข้า settled (คำนวณเสร็จแล้ว)
+			evaluateNeighbours(evaluationNode);                  // ประเมินโหนดข้างเคียง
+		}
+	}
+
+	// 🔹 หาว่าโหนดใดใน unsettled มีค่าระยะทาง (distance) น้อยที่สุด
+	private int getNodeWithMinDistanceUnsettled() {
+		int node = 0;      // โหนดที่มีค่าน้อยที่สุด
+		int min;        // ระยะทางที่น้อยที่สุดชั่วคราว
+		Iterator<Integer> iterator = unsettled.iterator();       // ใช้ตัววนซ้ำ
+		node = iterator.next();        // เริ่มจากโหนดแรกในเซต
+		min = distances[node];        // ตั้งค่าระยะทางเริ่มต้น
+
+		for(int i = 1; i <= distances.length; i++) {             // วนลูปเช็คทุกโหนด
+			if(unsettled.contains(i)) {      // ถ้าโหนดนี้ยังอยู่ใน unsettled
+				if(distances[i] <= min) {    // และมีระยะทางน้อยกว่า min ปัจจุบัน
+					min = distances[i];  // อัปเดตค่าระยะทางที่น้อยที่สุด
+					node = i;     // จดจำหมายเลขโหนดนั้นไว้
+				}
+			}
+		}
+		return node;       // คืนค่าหมายเลขโหนดที่สั้นที่สุดในรอบนี้
+	}
+
+	// 🔹 ประเมินโหนดเพื่อนบ้าน (Neighbor) ของโหนดที่เพิ่งเลือก
+	private void evaluateNeighbours(int evaluationNode) {
+		int edgeDistance = -1;          // น้ำหนักของเส้นทาง (Edge)
+		int newDistance = -1;           // ระยะทางใหม่ที่คำนวณได้
+
+		for(int destinationNode = 1; destinationNode <= numberOfNodes; destinationNode++) {
+			if(!settled.contains(destinationNode)) {              // ถ้าโหนดนี้ยังไม่ถูกคำนวณเสร็จ
+				if(adjacencyMatrix[evaluationNode][destinationNode] != Integer.MAX_VALUE) { // และมีเส้นทางอยู่จริง
+					edgeDistance = adjacencyMatrix[evaluationNode][destinationNode]; // น้ำหนักของเส้นทาง
+					newDistance = distances[evaluationNode] + edgeDistance;          // ระยะทางใหม่ = ระยะทางปัจจุบัน + น้ำหนักเส้นทาง
+
+					if(newDistance < distances[destinationNode])       // ถ้าระยะทางใหม่น้อยกว่าเดิม
+						distances[destinationNode] = newDistance;  // อัปเดตระยะทางที่สั้นกว่า
+
+					unsettled.add(destinationNode);        // เพิ่มโหนดปลายทางเข้ามาในเซต unsettled
+				}
+			}
+		}
+	}
+
+	// 🔹 main() — จุดเริ่มต้นของโปรแกรม
+	public static void main(String[] args) {
+		int adjecencyMatrix[][];     // ตารางเก็บน้ำหนักระหว่างโหนด (Weighted Graph)
+		int numberOfvertices;        // จำนวนโหนดในกราฟ
+		int source = 0, destination = 0; // จุดเริ่มต้นและจุดปลายทางที่ต้องการหาเส้นทาง
+		Scanner scan = new Scanner(System.in); // สร้าง Scanner เพื่อรับข้อมูลจากผู้ใช้
+
+		try {
+			System.out.println("Enter the number of vertices");   // ขอจำนวนโหนดจากผู้ใช้
+			numberOfvertices = scan.nextInt();                    // รับค่าจำนวนโหนด
+			adjecencyMatrix = new int[numberOfvertices + 1][numberOfvertices + 1]; // สร้างเมทริกซ์เก็บน้ำหนัก
+
+			System.out.println("Enter the weighted Matrix for graph."); // ขอให้ผู้ใช้กรอกตารางน้ำหนัก
+			for(int i = 1; i <= numberOfvertices; i++) {          // วนลูปรับข้อมูลทุกช่อง
+				for(int j = 1; j <= numberOfvertices; j++) {
+					adjecencyMatrix[i][j] = scan.nextInt();       // รับค่าน้ำหนักระหว่างโหนด i → j
+					if(i == j) {                                  // ถ้าเป็นเส้นทางไปตัวเอง
+						adjecencyMatrix[i][j] = 0;                // ระยะทาง = 0
+						continue;
+					}
+					if(adjecencyMatrix[i][j] == 0)                // ถ้าไม่มีเส้นทาง
+						adjecencyMatrix[i][j] = Integer.MAX_VALUE; // ตั้งค่าให้เป็น infinity (ไม่สามารถเดินทางได้)
+				}
+			}
+
+			System.out.print("\nEnter the source: ");             // รับโหนดเริ่มต้น
+			source = scan.nextInt();
+			System.out.print("\nEnter the destination: ");        // รับโหนดปลายทาง
+			destination = scan.nextInt();
+
+			DijkstrasShortestPath dijkstras = new DijkstrasShortestPath(numberOfvertices); // สร้างอ็อบเจกต์
+			dijkstras.dijkstrasAlgorithm(adjecencyMatrix, source); // เรียกใช้อัลกอริทึม Dijkstra
+
+			System.out.println("The Shortest Path from " + source + " to " + destination + " is ");
+			for(int i = 1; i <= dijkstras.distances.length - 1; i++) { // แสดงผลลัพธ์เฉพาะโหนดปลายทาง
+				if(i == destination)
+					System.out.println(source + " to " + i + " is " + dijkstras.distances[i]);
+			}
+		} catch (InputMismatchException e) {                      // กรณีผู้ใช้ป้อนข้อมูลผิด (ไม่ใช่ตัวเลข)
+			System.out.println("Wrong Input Format!!!");          // แสดงข้อความแจ้งเตือน
+		}
+		scan.close();                                             // ปิด Scanner เพื่อคืนทรัพยากร
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import java.util.InputMismatchException;    // ใช้สำหรับตรวจจับข้อผิดพลาดเมื่อผู้ใช้กรอกข้อมูลผิดชนิด
+import java.util.Scanner;                   // ใช้สำหรับรับข้อมูลจากคีย์บอร์ด
+
+public class Prims {                        // ประกาศคลาสหลักชื่อ Prims (ใช้อัลกอริทึมของ Prim)
+	private boolean unsettled[];             // อาเรย์เก็บโหนดที่ยังไม่ได้เลือกเข้าสู่ต้นไม้ (ยังรอพิจารณา)
+	private boolean settled[];               // อาเรย์เก็บโหนดที่เลือกแล้วให้อยู่ในต้นไม้ (MST)
+	private int numberofVertices;            // เก็บจำนวนโหนดทั้งหมดในกราฟ
+	private int adjacencyMatrix[][];         // ตารางเก็บน้ำหนักเส้นทางระหว่างโหนดต่าง ๆ
+	private int key[];                       // เก็บค่าน้ำหนักเส้นทางที่น้อยที่สุดในแต่ละรอบ
+	private int parent[];                    // เก็บว่าทุกโหนดมาจากโหนดใด (เพื่อสร้างเส้นทางของ MST)
+	public static final int INFINITE = 999;  // ค่าคงที่แทนว่า “ไม่มีเส้นทาง” (infinity)
+
+	// 🔹 Constructor — ใช้สร้างอ็อบเจกต์และเตรียมอาเรย์ทั้งหมดตามจำนวนโหนด
+	public Prims(int numberofVertices) {
+		this.numberofVertices = numberofVertices;                   // กำหนดจำนวนโหนด
+		unsettled = new boolean[numberofVertices + 1];              // เซตสถานะของโหนดที่ยังไม่ได้เลือก (+1 เพราะเริ่มนับจาก 1)
+		settled = new boolean[numberofVertices + 1];                // เซตสถานะของโหนดที่ถูกเลือกแล้ว
+		adjacencyMatrix = new int[numberofVertices + 1][numberofVertices + 1]; // ตารางเก็บน้ำหนักระหว่างโหนด
+		key = new int[numberofVertices + 1];                        // เก็บน้ำหนักน้อยที่สุดของแต่ละโหนด
+		parent = new int[numberofVertices + 1];                     // เก็บโหนดต้นทาง (พ่อ) ของแต่ละโหนด
+	}
+
+	// 🔹 นับจำนวนโหนดที่ยังไม่ได้เลือก (ใช้เป็นเงื่อนไขในการวนลูป)
+	public int getUnsettledCount(boolean unsettled[]) {
+		int count = 0;                                              // ตัวแปรนับจำนวนโหนดที่ยังไม่ถูกเลือก
+		for(int index = 0; index < unsettled.length; index++) {     // วนลูปเช็คทุกโหนด
+			if(unsettled[index])                                    // ถ้ายังไม่ได้เลือก
+				count++;                                            // เพิ่มจำนวน
+		}
+		return count;                                               // คืนค่าจำนวนโหนดที่ยังไม่ถูกเลือก
+	}
+
+	// 🔹 หาโหนดที่มีค่าน้ำหนัก (key) น้อยที่สุดจากกลุ่ม unsettled
+	private int getMimumKeyVetexFromUnsettled(boolean[] unsettled) {
+		int node = 0;                                               // ตัวแปรเก็บโหนดที่มีค่าน้อยที่สุด
+		int min = Integer.MAX_VALUE;                                // ตั้งค่าขั้นต้นเป็นค่าสูงสุด (เพื่อหาค่าน้อยสุด)
+		for(int vertex = 1; vertex <= numberofVertices; vertex++) { // วนเช็คทุกโหนดในกราฟ
+			if(unsettled[vertex] == true && key[vertex] < min) {    // ถ้าโหนดยังไม่ถูกเลือกและมีค่าน้อยกว่า min
+				node = vertex;                                      // จดจำหมายเลขโหนด
+				min = key[vertex];                                  // จดจำค่าน้ำหนักนั้นไว้
+			}
+		}
+		return node;     // ส่งคืนหมายเลขโหนดที่มีค่าน้อยสุด
+	}
+
+	// 🔹 ประเมินโหนดเพื่อนบ้านของโหนดที่เพิ่งเลือกเข้ามาในต้นไม้
+	public void evaluateNeighbours(int evaluationVertex) {
+		for(int destinationVertex = 1; destinationVertex <= numberofVertices; destinationVertex++) { // วนเช็คทุกโหนดที่เป็นปลายทาง
+			if(settled[destinationVertex] == false) {               // ถ้ายังไม่ถูกเลือกเข้าสู่ต้นไม้
+				if(adjacencyMatrix[evaluationVertex][destinationVertex] != INFINITE) { // ถ้ามีเส้นทางระหว่างสองโหนดจริง
+					if(adjacencyMatrix[evaluationVertex][destinationVertex] < key[destinationVertex]) { // ถ้าน้ำหนักเส้นทางนี้ดีกว่าเดิม
+						key[destinationVertex] = adjacencyMatrix[evaluationVertex][destinationVertex]; // อัปเดตค่าน้ำหนักใหม่
+						parent[destinationVertex] = evaluationVertex;             // ระบุว่าโหนดพ่อคือโหนดที่ประเมินอยู่
+					}
+					unsettled[destinationVertex] = true;     // ทำเครื่องหมายว่าโหนดนี้ต้องประเมินต่อในรอบถัดไป
+				}
+			}
+		}
+	}
+
+	// 🔹 อัลกอริทึมหลักของ Prim (ใช้คำนวณต้นไม้ครอบคลุมขั้นต่ำสุด)
+	public void primsAlgorithm(int adjacencyMatrix[][]) {
+		int evaluationVertex;       // ตัวแปรเก็บโหนดที่กำลังพิจารณาอยู่
+
+		// คัดลอกเมทริกซ์น้ำหนักจากข้อมูลที่รับเข้ามา
+		for(int source = 1; source <= numberofVertices; source++) {
+			for(int destination = 1; destination <= numberofVertices; destination++) {
+				this.adjacencyMatrix[source][destination] = adjacencyMatrix[source][destination];
+			}
+		}
+
+		// ตั้งค่า key ของทุกโหนดให้เป็น infinity
+		for(int index = 1; index <= numberofVertices; index++) {
+			key[index] = INFINITE;
+		}
+
+		// เริ่มต้นที่โหนดแรก
+		key[1] = 0;              // โหนดแรกมีค่าน้ำหนัก 0 (เพราะเป็นจุดเริ่มต้น)
+		unsettled[1] = true;     // ยังต้องพิจารณา
+		parent[1] = 1;           // โหนดแรกให้พ่อเป็นตัวเอง
+
+		// ทำซ้ำจนกว่าจะไม่มีโหนดเหลือใน unsettled
+		while(getUnsettledCount(unsettled) != 0) {
+			evaluationVertex = getMimumKeyVetexFromUnsettled(unsettled); // หาโหนดที่มีค่าน้ำหนักน้อยที่สุด
+			unsettled[evaluationVertex] = false;  // เอาออกจากกลุ่มที่ยังไม่เลือก
+			settled[evaluationVertex] = true;     // ใส่เข้ากลุ่มที่เลือกแล้ว
+			evaluateNeighbours(evaluationVertex); // ประเมินเพื่อนบ้านของโหนดนั้น
+		}
+	}
+
+	// 🔹 แสดงผลลัพธ์ของ Minimum Spanning Tree (MST)
+	public void printMST() {
+		System.out.println("SOURCE : DESTINATION = WEIGHT");         // หัวตารางผลลัพธ์
+		for(int vertex = 2; vertex <= numberofVertices; vertex ++)   // เริ่มจากโหนดที่ 2 เพราะโหนดแรกไม่มีพ่อ
+			System.out.println(parent[vertex] + "\t:\t" + vertex + "\t:\t" + adjacencyMatrix[parent[vertex]][vertex]);
+			// แสดงผลในรูปแบบ (โหนดต้นทาง : โหนดปลายทาง : น้ำหนัก)
+	}
+
+	// 🔹 main() — จุดเริ่มต้นของโปรแกรม
+	public static void main(String[] args) {
+		int adjacencyMatrix[][];                                    // ตารางเก็บน้ำหนักระหว่างโหนด
+		int numberOFVertices;                                       // จำนวนโหนดทั้งหมด
+		Scanner scan = new Scanner(System.in);                      // สร้าง Scanner เพื่อรับข้อมูลจากคีย์บอร์ด
+
+		try {
+			System.out.print("Enter the number of vertex: ");        // ขอให้ผู้ใช้กรอกจำนวนโหนด
+			numberOFVertices = scan.nextInt();                       // อ่านค่าจำนวนโหนดจากผู้ใช้
+
+			adjacencyMatrix = new int[numberOFVertices + 1][numberOFVertices + 1]; // สร้างตารางน้ำหนัก
+
+			System.out.println("Enter the weight Matrix for the graph."); // ขอให้ผู้ใช้กรอกเมทริกซ์น้ำหนัก
+			for(int i = 1; i <= numberOFVertices; i++) {             // วนใส่ค่าทุกรายการ
+				for(int j = 1; j <= numberOFVertices; j++) {
+					adjacencyMatrix[i][j] = scan.nextInt();          // รับค่าน้ำหนักจากผู้ใช้
+
+					if(i == j) {                                     // ถ้าเป็นเส้นทางไปตัวเอง
+						adjacencyMatrix[i][j] = 0;                   // กำหนดน้ำหนักเป็น 0
+						continue;
+					}
+
+					if(adjacencyMatrix[i][j] == 0)                   // ถ้าไม่มีเส้นทาง (ผู้ใช้ใส่ 0)
+						adjacencyMatrix[i][j] = INFINITE;            // ให้แทนด้วยค่า INFINITE (999)
+				}
+			}
+
+			Prims prims = new Prims(numberOFVertices);               // สร้างอ็อบเจกต์ Prim ด้วยจำนวนโหนด
+			prims.primsAlgorithm(adjacencyMatrix);                   // เรียกใช้อัลกอริทึมคำนวณต้นไม้ครอบคลุมขั้นต่ำสุด
+			prims.printMST();                                        // แสดงผลลัพธ์ของ MST
+
+		} catch (InputMismatchException e) {                         // ถ้าผู้ใช้กรอกข้อมูลผิด (ไม่ใช่ตัวเลข)
+			System.out.println("Wrong Input Format");                // แจ้งข้อความผิดพลาด
+		}
+
+		scan.close();                                                // ปิด Scanner เพื่อคืนทรัพยากร
+	}
+}
+

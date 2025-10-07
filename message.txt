@@ -1,0 +1,176 @@
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
+
+// คลาส BinaryHeap ใช้สร้างโครงสร้างข้อมูลแบบ Min Binary Heap
+class BinaryHeap {
+	private static final int d = 2; // d คือจำนวนลูกต่อโหนด (2 หมายถึง Binary Heap)
+	private int heapSize; // ขนาดของ heap ปัจจุบัน (จำนวนสมาชิกที่มีอยู่)
+	private int[] heap;   // อาเรย์เก็บข้อมูลใน heap
+	
+	// --------------------------- ตัวสร้าง ---------------------------
+	public BinaryHeap(int capacity) {
+		heapSize = 0; // เริ่มต้น heap ว่าง
+		heap = new int[capacity + 1]; // สร้างอาเรย์ heap ขนาด capacity + 1
+		Arrays.fill(heap, -1); // กำหนดค่าเริ่มต้นทั้งหมดเป็น -1
+	}
+	
+	// --------------------------- ตรวจสอบสถานะ ---------------------------
+	public boolean isEmpty() {
+		return heapSize == 0; // คืนค่า true ถ้า heap ว่าง
+	}
+	public boolean isFull() {
+		return heapSize == heap.length; // คืนค่า true ถ้า heap เต็ม
+	}
+	public void makeEmpty() {
+		heapSize = 0; // ล้างข้อมูลใน heap
+	}
+	
+	// --------------------------- เมธอดช่วยคำนวณตำแหน่ง ---------------------------
+	private int parent(int i) {
+		return (i - 1) / d; // หาตำแหน่งของพ่อของโหนด i
+	}
+	private int kthChild(int i, int k) {
+		return d * i + k; // หาตำแหน่งของลูกลำดับที่ k ของโหนด i
+	}
+	
+	// หาลูกที่มีค่าน้อยที่สุดในบรรดาลูกของโหนด ind
+	private int minChild(int ind) {
+		int bestChild = kthChild(ind, 1); // ลูกตัวแรก
+		int k = 2;
+		int pos = kthChild(ind, k);
+		while ((k <= d) && (pos < heapSize)) { // ตรวจทุกลูกที่มี
+			if (heap[pos] < heap[bestChild])
+				bestChild = pos;
+			pos = kthChild(ind, k++);
+		}
+		return bestChild; // คืนตำแหน่งลูกที่ค่าน้อยที่สุด
+	}
+	
+	// --------------------------- จัดเรียง heap หลังการเพิ่ม ---------------------------
+	private void heapifyUp(int childInd) {
+		int tmp = heap[childInd]; // เก็บค่าที่เพิ่มเข้ามา
+		// ถ้ายังไม่ถึง root และค่าของลูกน้อยกว่าค่าพ่อ -> สลับขึ้นไป
+		while (childInd > 0 && tmp < heap[parent(childInd)]) {
+			heap[childInd] = heap[parent(childInd)];
+			childInd = parent(childInd);
+		}
+		heap[childInd] = tmp;
+	}
+	
+	// --------------------------- จัดเรียง heap หลังการลบ ---------------------------
+	private void heapifyDown(int ind) {
+		int child;
+		int tmp = heap[ind]; // เก็บค่าปัจจุบันของ root
+		// ทำจนกว่าจะไม่มีลูก (ถึงใบ)
+		while (kthChild(ind, 1) < heapSize) {
+			child = minChild(ind);
+			if (heap[child] < tmp)
+				heap[ind] = heap[child]; // ดึงค่าลูกที่เล็กขึ้นมาแทน
+			else
+				break;
+			ind = child;
+		}
+		heap[ind] = tmp;
+	}
+	
+	// --------------------------- ฟังก์ชันหลักของ Heap ---------------------------
+	public void insert(int x) {
+		if (isFull())
+			throw new NoSuchElementException("Overflow Exception"); // ถ้าเต็มจะ error
+		heap[heapSize++] = x; // ใส่ค่าในตำแหน่งสุดท้าย
+		heapifyUp(heapSize - 1); // ปรับ heap ให้เป็นระเบียบ
+	}
+	
+	public int findmin() {
+		if (isEmpty())
+			throw new NoSuchElementException("Underflow Exception");
+		return heap[0]; // คืนค่าต่ำสุด (root)
+	}
+	
+	public int delete(int ind) {
+		if (isEmpty())
+			throw new NoSuchElementException("Underflow Exception");
+		int keyItem = heap[ind]; // เก็บค่าที่จะลบ
+		heap[ind] = heap[heapSize - 1]; // นำค่าล่าสุดมาแทน
+		heapSize--; // ลดขนาด heap
+		heapifyDown(ind); // ปรับ heap ให้เรียงใหม่
+		return keyItem; // คืนค่าที่ลบออกไป
+	}
+	
+	public int deleteMin() {
+		delete(0); // ลบ root (ค่าน้อยสุด)
+		int keyMin = heap[0];
+		return keyMin;
+	}
+	
+	// --------------------------- แสดงผลข้อมูล heap ---------------------------
+	public void printHeap() {
+		System.out.print("\nHeap = ");
+		for (int i = 0; i < heapSize; i++)
+			System.out.print(heap[i] + " ");
+		System.out.println();
+	}
+}
+
+// -------------------------------------------------------------------------
+// คลาส BinaryHeapDemo ใช้ทดสอบการทำงานของ Binary Heap
+public class BinaryHeapDemo {
+
+	@SuppressWarnings("resource")
+	public static void main(String[] args) {
+		Scanner scan = new Scanner(System.in);
+		System.out.println("Binary Heap Demo");
+		System.out.print("Enter size of Binary heap: ");
+		
+		// สร้าง BinaryHeap ด้วยขนาดที่ผู้ใช้กำหนด
+		BinaryHeap bh = new BinaryHeap(scan.nextInt());
+		
+		char ch;
+		do {
+			System.out.println("\nBinary Heap Operations\n");
+			System.out.println("1. insert");
+			System.out.println("2. delete min");
+			System.out.println("3. check full");
+			System.out.println("4. check empty");
+			System.out.println("5. clear");
+			
+			int choice = scan.nextInt();
+			switch (choice) {
+			case 1: {
+				try {
+					System.out.println("Enter integer element to insert: ");
+					bh.insert(scan.nextInt()); // แทรกข้อมูล
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				break;
+			}
+			case 2:
+				try {
+					System.out.println("Min Element = " + bh.deleteMin()); // ลบค่าน้อยสุด
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				break;
+			case 3:
+				System.out.println("Full status = " + bh.isFull()); // ตรวจว่าเต็มหรือยัง
+				break;
+			case 4:
+				System.out.println("Empty status = " + bh.isEmpty()); // ตรวจว่าว่างหรือไม่
+				break;
+			case 5:
+				bh.makeEmpty(); // ล้าง heap
+				System.out.println("Heap cleared\n");
+				break;
+			default:
+				System.out.println("Wrong Entry\n");
+				break;
+			}
+			
+			bh.printHeap(); // แสดง heap ปัจจุบัน
+			System.out.println("\nDo you want to continue (Y or N)");
+			ch = scan.next().charAt(0);
+		} while (ch == 'y' || ch == 'Y'); // ทำซ้ำถ้าผู้ใช้ต้องการ
+	}
+}

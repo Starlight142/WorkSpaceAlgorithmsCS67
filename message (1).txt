@@ -1,0 +1,178 @@
+import java.util.Scanner;
+
+// คลาสเก็บโหนดของ Leftist Heap
+class LeftHeapNode {
+	int element, SValue;        // element = ค่าข้อมูล , SValue = ค่า null path length (ระยะทางสั้นสุดไปยังโหนดว่าง)
+	LeftHeapNode left, right;   // ชี้ไปยังโหนดซ้ายและขวา
+	
+	// ตัวสร้างแบบมีค่าเดียว (สร้างโหนดใหม่)
+	public LeftHeapNode(int ele) {
+		this(ele, null, null);
+	}
+	
+	// ตัวสร้างแบบกำหนดซ้ายและขวาได้
+	public LeftHeapNode(int ele, LeftHeapNode left, LeftHeapNode right) {
+		this.element = ele;      // เก็บค่าของโหนด
+		this.left = left;        // ลูกซ้าย
+		this.right = right;      // ลูกขวา
+		this.SValue = 0;         // ค่า null path length เริ่มต้นเป็น 0
+	}
+}
+
+// คลาสหลักของโครงสร้างข้อมูล Leftist Heap
+class LeftListHeap {
+	private LeftHeapNode root;  // โหนดรากของ heap
+	
+	// ตัวสร้าง (เริ่มต้น heap ว่าง)
+	public LeftListHeap() {
+		root = null;
+	}
+	
+	// ตรวจสอบว่า heap ว่างหรือไม่
+	public boolean isEmpty() {
+		return root == null;
+	}
+	
+	// เคลียร์ heap ทั้งหมด
+	public void clear() {
+		root = null;
+	}
+	
+	// รวม (merge) heap ปัจจุบันกับ heap อื่น
+	public void merge(LeftListHeap rhs) {
+		if (this == rhs) // ถ้าเป็น heap เดียวกัน ไม่ต้องรวม
+			return;
+		root = merge(root, rhs.root); // รวม root ทั้งสองต้น
+		rhs.root = null;              // เคลียร์ heap ที่รวมแล้ว
+	}
+	
+	// เมธอด merge แบบ recursive ระหว่างโหนด 2 ต้น
+	private LeftHeapNode merge(LeftHeapNode x, LeftHeapNode y) {
+		// กรณีฐาน: ถ้าโหนดใดเป็น null ให้คืนอีกโหนดกลับไป
+		if (x == null)
+			return y;
+		if (y == null)
+			return x;
+		
+		// ให้ x เป็นโหนดที่มีค่าน้อยกว่าเสมอ (min-heap)
+		if (x.element > y.element) {
+			LeftHeapNode tmp = x;
+			x = y;
+			y = tmp;
+		}
+		
+		// รวมโหนด y เข้าไปทางด้านขวาของ x
+		x.right = merge(x.right, y);
+		
+		// ถ้าไม่มีลูกซ้าย → สลับลูกขวาให้มาเป็นลูกซ้าย
+		if (x.left == null) {
+			x.left = x.right;
+			x.right = null;
+		} else {
+			// ถ้าลูกซ้ายมีค่า SValue น้อยกว่าลูกขวา → สลับตำแหน่ง (เพื่อรักษาเงื่อนไข Leftist)
+			if (x.left.SValue < x.right.SValue) {
+				LeftHeapNode tmp = x.left;
+				x.left = x.right;
+				x.right = tmp;
+			}
+			// อัปเดตค่า SValue ของโหนด (null path length = ของลูกขวา + 1)
+			x.SValue = x.right.SValue + 1;
+		}
+		
+		return x; // คืนโหนดที่รวมเสร็จแล้ว
+	}
+	
+	// แทรกข้อมูลใหม่เข้า heap
+	public void insert(int x) {
+		// สร้างโหนดใหม่ แล้ว merge เข้ากับ heap เดิม
+		root = merge(new LeftHeapNode(x), root);
+	}
+	
+	// ลบค่าต่ำสุดออกจาก heap (โหนด root)
+	public int deleteMin() {
+		if (isEmpty()) // ถ้า heap ว่างให้คืน -1
+			return -1;
+		
+		int minItem = root.element;      // เก็บค่าต่ำสุดไว้ก่อน
+		root = merge(root.left, root.right); // รวมลูกซ้ายและลูกขวาเข้าด้วยกันแทน root เดิม
+		return minItem;                  // คืนค่าต่ำสุด
+	}
+	
+	// แสดงค่าแบบ inorder traversal (ซ้าย -> root -> ขวา)
+	public void inorder() {
+		inorder(root);
+		System.out.println();
+	}
+	
+	// เมธอดช่วยในการ traversal
+	private void inorder(LeftHeapNode r) {
+		if (r != null) {
+			inorder(r.left);
+			System.out.print(" " + r.element);
+			inorder(r.right);
+		}
+	}
+}
+
+// ---------------------- คลาสหลัก (Main Program) ----------------------
+public class LeftHeapDemo {
+	
+	@SuppressWarnings("resource")
+	public static void main(String[] args) {
+		Scanner scan = new Scanner(System.in);
+		System.out.println("LeftHeap Demo"); // แสดงชื่อโปรแกรม
+		
+		LeftListHeap lh = new LeftListHeap(); // สร้าง Leftist Heap
+		
+		char ch; // ใช้ควบคุมการวนลูปเมนู
+		do {
+			System.out.println("\nLeftListHeap Operations\n");
+			System.out.println("1. insert");     // เพิ่มข้อมูล
+			System.out.println("2. delete min"); // ลบค่าต่ำสุด
+			//System.out.println("3. check fill"); // (คอมเมนต์ไว้ ไม่ได้ใช้)
+			System.out.println("4. check empty"); // ตรวจสอบว่า heap ว่างหรือไม่
+			System.out.println("5. clear");      // เคลียร์ heap
+			
+			int choice = scan.nextInt(); // รับค่าทางเลือกจากผู้ใช้
+			
+			switch(choice) {
+			case 1: // เพิ่มข้อมูลใหม่
+				try {
+					System.out.println("Enter integer element to insert: ");
+					lh.insert(scan.nextInt());
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				break;
+				
+			case 2: // ลบค่าต่ำสุด
+				try {
+					System.out.println("Min Element = " + lh.deleteMin());
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+				break;
+				
+			case 3: // ตรวจสอบว่า heap ว่างไหม (จริง ๆ น่าจะเป็น case 4)
+				System.out.println("Empty status = " + lh.isEmpty());
+				break;
+				
+			case 4: // เคลียร์ heap
+				lh.clear();
+				System.out.println("Heap cleared\n");
+				break;
+				
+			default:
+				System.out.println("Wrong Entry\n"); // ถ้าเลือกเมนูผิด
+				break;
+			}
+			
+			// แสดงผลโครงสร้าง heap หลังทำแต่ละคำสั่ง
+			System.out.print("\nInorder Traversal:");
+			lh.inorder(); // แสดงโหนดทั้งหมดแบบ inorder
+			
+			System.out.println("\nDo you want to continue(Y or N)");
+			ch = scan.next().charAt(0); // ถามว่าจะทำต่อไหม
+		} while (ch == 'y' || ch == 'Y'); // วนต่อถ้าผู้ใช้ตอบ y/Y
+	}
+}
